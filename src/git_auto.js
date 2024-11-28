@@ -9,7 +9,7 @@ const app = express();
 const port = 4000; // Port for your API server
 
 // Enable CORS
-app.use(cors({origin:'https://git-auto.onrender.com'})); // Allow all origins by default
+app.use(cors({origin:'https://image-upload-80na.onrender.com/'})); // Allow all origins by default
 
 // Middleware to parse JSON requests
 app.use(express.json());
