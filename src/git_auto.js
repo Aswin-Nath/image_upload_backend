@@ -1,28 +1,22 @@
 const express = require("express");
-const cors = require("cors"); // Import cors
-const multer = require("multer"); // Import multer for file uploads
+const cors = require("cors");
+const multer = require("multer");
 const fs = require("fs");
 const axios = require("axios");
-// require("dotenv").config(); // For environment variables
 
 const app = express();
-const port = 4000; // Port for your API server
+const port = 4000;
 
-// Enable CORS
-app.use(cors()); // Allow all origins by default
-
-// Middleware to parse JSON requests
+app.use(cors());
 app.use(express.json());
 
-// Multer configuration to handle image upload
-const storage = multer.memoryStorage(); // Store file in memory for easy access
+const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
 
-// GitHub Configuration
 const username = "Aswin-Nath";
 const repoName = "Image_Dumo";
 const branch = "main";
-const token ="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"; // Store token securely in .env file
+const token ="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";
 const githubApiUrl = "https://api.github.com";
 
 async function uploadImageToGitHub(imageBuffer, imageName, imageType = "jpg") {
@@ -55,7 +49,6 @@ async function uploadImageToGitHub(imageBuffer, imageName, imageType = "jpg") {
   }
 }
 
-// API Endpoint to upload the image
 app.post("/upload-image", upload.single("image"), async (req, res) => {
   const { image_name, image_type } = req.body;
 
@@ -72,7 +65,6 @@ app.post("/upload-image", upload.single("image"), async (req, res) => {
   }
 });
 
-// Start the server
 app.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}`);
 });
