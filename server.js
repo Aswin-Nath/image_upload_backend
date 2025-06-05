@@ -76,6 +76,23 @@ app.get("/",(req,res)=>{
   res.send("This is Backend");
 })
 
+app.post("/upload-video", upload.single("video"), async (req, res) => {
+  const { video_name, video_type } = req.body;
+
+  if (!req.file || !video_name) {
+    return res.status(400).json({ error: "Missing required parameters: video_name and video file" });
+  }
+
+  try {
+    const uploadedUrl = await uploadImageToGitHub(req.file.buffer, video_name, video_type || "mp4");
+    res.json({ message: "Video uploaded successfully", url: uploadedUrl });
+  } catch (err) {
+    console.error("Failed to upload video:", err.message);
+    res.status(500).json({ error: "Failed to upload video", details: err.message });
+  }
+});
+
+
 app.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}`);
 });
