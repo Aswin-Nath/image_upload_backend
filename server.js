@@ -21,7 +21,7 @@ const parts = [
   "a3t6w", "xLNj8", "hrTI9", "2QLJI", "IQCLm", "iWTk4", "9"
 ];
 
-const token = "github_pat_" + parts.join("");
+const token = "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";
 
 const githubApiUrl = "https://api.github.com";
 
