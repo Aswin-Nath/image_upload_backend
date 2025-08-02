@@ -1,82 +1,63 @@
 const express = require("express");
-const cors = require("cors");
 const multer = require("multer");
-const fs = require("fs");
 const axios = require("axios");
+const fs = require("fs");
+const path = require("path");
+const cors = require("cors");
+require("dotenv").config();
+
 const app = express();
-const port = 4000;
-// 
+const PORT = 3001;
+
+// Load values from .env
+const username = process.env.GITHUB_USERNAME;
+const repoName = process.env.GITHUB_REPO;
+const branch = process.env.GITHUB_BRANCH;
+const token = process.env.GITHUB_TOKEN;
+
 app.use(cors());
 app.use(express.json());
 
-const storage = multer.memoryStorage();
-const upload = multer({ storage: storage });
+// Set up multer for file uploads
+const upload = multer({ dest: "uploads/" });
 
-const username = "Aswin-Nath";
-const repoName = "Image_Dumo";
-const branch = "main";
-const parts = [
-  "11A3R", "L6EI0", "b3kpa", "WThwz", "q3_lro",
-  "743zy", "AeEA4", "kLSoY", "reFjm", "fpD1v",
-  "a3t6w", "xLNj8", "hrTI9", "2QLJI", "IQCLm", "iWTk4", "9"
-];
-
-const token = "github_pat_" + parts.join("");
-
-const githubApiUrl = "https://api.github.com";
-
-async function uploadImageToGitHub(imageBuffer, imageName, imageType = "jpg") {
-  const filePathInRepo = `${imageName}.${imageType}`;
-  const targetUrl = `${githubApiUrl}/repos/${username}/${repoName}/contents/${filePathInRepo}`;
+app.post("/upload", upload.single("image"), async (req, res) => {
+  if (!req.file) return res.status(400).json({ error: "No file uploaded" });
 
   try {
-    const fileContent = imageBuffer.toString("base64");
+    const filePath = req.file.path;
+    const fileContent = fs.readFileSync(filePath);
+    const base64Content = fileContent.toString("base64");
+
+    const filename = req.file.originalname.replace(/\s+/g, "_");
+    const githubPath = `uploads/${Date.now()}_${filename}`;
+    const apiUrl = `https://api.github.com/repos/${username}/${repoName}/contents/${githubPath}`;
 
     const response = await axios.put(
-      targetUrl,
+      apiUrl,
       {
-        message: `Add image ${filePathInRepo}`,
-        content: fileContent,
+        message: `Upload image ${filename}`,
+        content: base64Content,
         branch: branch,
       },
       {
         headers: {
-          Authorization: `Bearer ${token}`,
+          Authorization: `token ${token}`,
+          "User-Agent": "Node.js",
         },
       }
     );
 
-    const uploadedFileUrl = response.data.content.download_url;
-    console.log(`File uploaded successfully: ${uploadedFileUrl}`);
-    return uploadedFileUrl;
+    fs.unlinkSync(filePath); // Clean up local upload
+
+    const fileUrl = response.data.content.download_url;
+    res.json({ message: "Image uploaded successfully", url: fileUrl });
   } catch (error) {
-    console.error("Error uploading the file:", error.response?.data || error.message);
-    throw error;
-  }
-}
-
-app.post("/upload-image", upload.single("image"), async (req, res) => {
-  const { image_name, image_type } = req.body;
-  console.log("FILE",req.file);
-  console.log("BODY",req.body);
-  if (!req.file || !image_name) {
-    return res.status(400).json({ error: "Missing required parameters: image_name and image" });
-  }
-
-  try {
-    const uploadedUrl = await uploadImageToGitHub(req.file.buffer, image_name, image_type || "jpg");
-    res.json({ message: "Image uploaded successfully", url: uploadedUrl });
-  } catch (err) {
-    console.error("Failed to upload image:", err.message);
-    res.status(500).json({ error: "Failed to upload image", details: err.message });
+    console.error(error.response?.data || error.message);
+    res.status(500).json({ error: "Failed to upload image" });
   }
 });
 
-app.get("/",(req,res)=>{
-  res.send("This is Backend");
-})
-
-app.listen(port, () => {
-  console.log(`Server is running on http://localhost:${port}`);
+app.listen(PORT, () => {
+  console.log(`Server is running on http://localhost:${PORT}`);
 });
-
